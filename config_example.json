@@ -1,7 +1,16 @@
 {
   "metricsPrefix": "graphql_exporter_",
   "graphqlURL": "http://localhost:8090/graphql/",
-  "graphqlAPIToken": "Token SECRET",
+  "graphqlCustomHeaders": [
+    {
+      "key": "Authorization",
+      "value": "%s"
+    },
+    {
+      "key": "Content-Type",
+      "value": "application/x-www-form-urlencoded"
+    }
+  ],
   "cacheExpire": 0,
   "queryTimeout": 60,
   "failFast": false,

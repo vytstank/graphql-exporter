@@ -8,14 +8,15 @@ import (
 )
 
 type Cfg struct {
-	MetricsPrefix      string
-	GraphqlURL         string
-	GraphqlAPIToken    string
-	CacheExpire        int64
-	QueryTimeout       int64
-	FailFast           bool
-	ExtendCacheOnError bool
-	Queries            []Query
+	MetricsPrefix        string
+	GraphqlURL           string
+	GraphqlAPIToken      string
+	GraphqlCustomHeaders []CustomHeader
+	CacheExpire          int64
+	QueryTimeout         int64
+	FailFast             bool
+	ExtendCacheOnError   bool
+	Queries              []Query
 }
 
 type Query struct {
@@ -29,6 +30,11 @@ type Metric struct {
 	Labels      []string
 	Value       string
 	Name        string
+}
+
+type CustomHeader struct {
+	Key   string
+	Value string
 }
 
 var (
@@ -55,9 +61,33 @@ func Init(configPath string) error {
 	if err != nil {
 		return err
 	}
-	val, isSet := os.LookupEnv("GRAPHQLAPITOKEN")
-	if isSet {
-		Config.GraphqlAPIToken = val
+
+	tokenVal, tokenIsSet := os.LookupEnv("GRAPHQLAPITOKEN")
+
+	if Config.GraphqlCustomHeaders == nil {
+		Config.GraphqlCustomHeaders = []CustomHeader{
+			{
+				Key:   "Content-Type",
+				Value: "application/x-www-form-urlencoded",
+			},
+		}
+		if tokenIsSet {
+			Config.GraphqlCustomHeaders = append(
+				Config.GraphqlCustomHeaders,
+				CustomHeader{
+					Key:   "Authorization",
+					Value: "%s",
+				},
+			)
+		}
+	}
+
+	for i := range Config.GraphqlCustomHeaders {
+		if Config.GraphqlCustomHeaders[i].Key == "Authorization" {
+			if tokenIsSet {
+				Config.GraphqlCustomHeaders[i].Value = fmt.Sprintf(Config.GraphqlCustomHeaders[i].Value, tokenVal)
+			}
+		}
 	}
 
 	if Config.QueryTimeout == 0 {
